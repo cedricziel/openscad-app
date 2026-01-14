@@ -33,6 +33,9 @@ struct CodeEditorView: NSViewRepresentable {
       textStorage.setAttributedString(highlightedText)
     }
 
+    // Store reference to coordinator in textView for completion handling
+    context.coordinator.textView = textView
+
     return scrollView
   }
 
@@ -70,8 +73,15 @@ struct CodeEditorView: NSViewRepresentable {
 
   class Coordinator: NSObject, NSTextViewDelegate {
     var parent: CodeEditorView
+    weak var textView: NSTextView?
     private let syntaxHighlighter = OpenSCADSyntaxHighlighter()
+    private let completionProvider = OpenSCADCompletionProvider()
     private var isUpdating = false
+
+    // Completion popup
+    private var completionPopup: CompletionPopupView?
+    private var completionPrefix: String = ""
+    private var completionStartLocation: Int = 0
 
     init(_ parent: CodeEditorView) {
       self.parent = parent
@@ -106,6 +116,177 @@ struct CodeEditorView: NSViewRepresentable {
           textView.selectedRanges = validRanges
         }
       }
+
+      // Update completion suggestions
+      updateCompletions(for: textView)
+    }
+
+    func textView(
+      _ textView: NSTextView,
+      doCommandBy commandSelector: Selector
+    ) -> Bool {
+      // Handle completion popup key events
+      if completionPopup != nil {
+        if commandSelector == #selector(NSResponder.moveDown(_:)) {
+          return handleCompletionKeyDown(keyCode: 125)
+        } else if commandSelector == #selector(NSResponder.moveUp(_:)) {
+          return handleCompletionKeyDown(keyCode: 126)
+        } else if commandSelector == #selector(NSResponder.insertNewline(_:)) {
+          return handleCompletionKeyDown(keyCode: 36)
+        } else if commandSelector == #selector(NSResponder.insertTab(_:)) {
+          return handleCompletionKeyDown(keyCode: 48)
+        } else if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+          dismissCompletion()
+          return true
+        }
+      }
+
+      // Handle Escape to dismiss completion
+      if commandSelector == #selector(NSResponder.cancelOperation(_:)) {
+        if completionPopup != nil {
+          dismissCompletion()
+          return true
+        }
+      }
+
+      return false
+    }
+
+    // Handle Ctrl+Space to trigger completion manually
+    func textView(
+      _ textView: NSTextView,
+      shouldChangeTextIn affectedCharRange: NSRange,
+      replacementString: String?
+    ) -> Bool {
+      return true
+    }
+
+    // MARK: - Completion Methods
+
+    private func updateCompletions(for textView: NSTextView) {
+      let cursorPosition = textView.selectedRange().location
+
+      // Extract the word being typed
+      guard let prefix = completionProvider.extractPrefix(from: textView.string, at: cursorPosition)
+      else {
+        dismissCompletion()
+        return
+      }
+
+      // Get matching completions
+      let completions = completionProvider.completions(for: prefix)
+
+      if completions.isEmpty {
+        dismissCompletion()
+        return
+      }
+
+      // Update or show completion popup
+      completionPrefix = prefix
+      completionStartLocation = cursorPosition - prefix.count
+
+      if completionPopup == nil {
+        showCompletionPopup(for: textView, with: completions)
+      } else {
+        completionPopup?.updateCompletions(
+          completions,
+          onSelect: { [weak self] item in
+            self?.insertCompletion(item)
+          },
+          onDismiss: { [weak self] in
+            self?.dismissCompletion()
+          }
+        )
+      }
+    }
+
+    private func showCompletionPopup(for textView: NSTextView, with completions: [CompletionItem]) {
+      guard let window = textView.window else { return }
+
+      // Get cursor position in screen coordinates
+      let cursorRect = textView.firstRect(
+        forCharacterRange: textView.selectedRange(), actualRange: nil)
+
+      let popupWidth: CGFloat = 250
+      let popupHeight: CGFloat = min(CGFloat(completions.count) * 24 + 8, 200)
+
+      // Create popup
+      let popup = CompletionPopupView(
+        frame: NSRect(x: 0, y: 0, width: popupWidth, height: popupHeight))
+      popup.updateCompletions(
+        completions,
+        onSelect: { [weak self] item in
+          self?.insertCompletion(item)
+        },
+        onDismiss: { [weak self] in
+          self?.dismissCompletion()
+        }
+      )
+
+      // Position popup below cursor
+      var popupOrigin = cursorRect.origin
+      popupOrigin.y -= popupHeight + 4  // Below the line
+
+      // Ensure popup stays within window bounds
+      let screenFrame = window.screen?.visibleFrame ?? NSRect.zero
+      if popupOrigin.y < screenFrame.minY {
+        // Show above cursor if not enough space below
+        popupOrigin.y = cursorRect.maxY + 4
+      }
+      if popupOrigin.x + popupWidth > screenFrame.maxX {
+        popupOrigin.x = screenFrame.maxX - popupWidth - 10
+      }
+
+      // Convert to textView coordinates
+      let popupFrame = NSRect(
+        origin: popupOrigin, size: NSSize(width: popupWidth, height: popupHeight))
+      let localFrame = textView.convert(popupFrame, from: nil)
+
+      popup.frame = localFrame
+      textView.addSubview(popup)
+
+      completionPopup = popup
+    }
+
+    private func handleCompletionKeyDown(keyCode: UInt16) -> Bool {
+      guard let popup = completionPopup else { return false }
+
+      let event = NSEvent.keyEvent(
+        with: .keyDown,
+        location: .zero,
+        modifierFlags: [],
+        timestamp: 0,
+        windowNumber: 0,
+        context: nil,
+        characters: "",
+        charactersIgnoringModifiers: "",
+        isARepeat: false,
+        keyCode: keyCode
+      )!
+
+      return popup.handleKeyDown(event)
+    }
+
+    private func insertCompletion(_ item: CompletionItem) {
+      guard let textView = textView else { return }
+
+      // Calculate the range to replace (the prefix that was typed)
+      let replaceRange = NSRange(location: completionStartLocation, length: completionPrefix.count)
+
+      // Insert the completion text
+      if textView.shouldChangeText(in: replaceRange, replacementString: item.insertText) {
+        textView.replaceCharacters(in: replaceRange, with: item.insertText)
+        textView.didChangeText()
+      }
+
+      dismissCompletion()
+    }
+
+    private func dismissCompletion() {
+      completionPopup?.removeFromSuperview()
+      completionPopup = nil
+      completionPrefix = ""
+      completionStartLocation = 0
     }
   }
 }
