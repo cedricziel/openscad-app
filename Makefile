@@ -36,7 +36,7 @@ test:
 # Lint Swift files using SwiftLint (if available)
 lint:
 	@if command -v swiftlint >/dev/null 2>&1; then \
-		swiftlint lint --path OpenSCADApp/OpenSCADApp; \
+		swiftlint lint OpenSCADApp/OpenSCADApp; \
 	else \
 		echo "SwiftLint not installed. Install with: brew install swiftlint"; \
 	fi
