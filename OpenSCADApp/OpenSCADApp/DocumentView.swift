@@ -74,6 +74,9 @@ struct DocumentView: View {
         exportToFormat(format)
       }
     }
+    .onReceive(NotificationCenter.default.publisher(for: .saveDocumentAs)) { _ in
+      saveDocumentAs()
+    }
   }
 
   private var editorHeader: some View {
@@ -185,6 +188,31 @@ struct DocumentView: View {
         await MainActor.run {
           isExporting = false
         }
+      }
+    }
+  }
+
+  private func saveDocumentAs() {
+    let savePanel = NSSavePanel()
+    savePanel.allowedContentTypes = [UTType.scadSource, .plainText]
+    savePanel.nameFieldStringValue = "Untitled.\(ScadDocument.defaultFileExtension)"
+    savePanel.title = "Save OpenSCAD Script"
+    savePanel.message = "Choose a location to save your OpenSCAD script"
+    savePanel.canCreateDirectories = true
+    savePanel.isExtensionHidden = false
+    savePanel.allowsOtherFileTypes = false
+
+    savePanel.begin { response in
+      guard response == .OK, let url = savePanel.url else { return }
+
+      do {
+        guard let data = document.text.data(using: .utf8) else {
+          throw CocoaError(.fileWriteUnknown)
+        }
+        try data.write(to: url, options: .atomic)
+      } catch {
+        errorMessage = "Failed to save file: \(error.localizedDescription)"
+        showError = true
       }
     }
   }
