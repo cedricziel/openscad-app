@@ -17,6 +17,8 @@
 		A1111111111111111111111F /* DocumentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11111111111111111111120 /* DocumentView.swift */; };
 		A11111111111111111111121 /* OpenSCADServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11111111111111111111122 /* OpenSCADServiceTests.swift */; };
 		A11111111111111111111123 /* ScadDocumentTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A11111111111111111111124 /* ScadDocumentTests.swift */; };
+		B11111111111111111111143 /* OpenSCADSyntaxHighlighter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11111111111111111111144 /* OpenSCADSyntaxHighlighter.swift */; };
+		B11111111111111111111145 /* OpenSCADSyntaxHighlighterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B11111111111111111111146 /* OpenSCADSyntaxHighlighterTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -44,6 +46,8 @@
 		A1111111111111111111112B /* OpenSCADAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = OpenSCADAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		A11111111111111111111122 /* OpenSCADServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSCADServiceTests.swift; sourceTree = "<group>"; };
 		A11111111111111111111124 /* ScadDocumentTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScadDocumentTests.swift; sourceTree = "<group>"; };
+		B11111111111111111111144 /* OpenSCADSyntaxHighlighter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSCADSyntaxHighlighter.swift; sourceTree = "<group>"; };
+		B11111111111111111111146 /* OpenSCADSyntaxHighlighterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenSCADSyntaxHighlighterTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -103,6 +107,7 @@
 			children = (
 				A11111111111111111111122 /* OpenSCADServiceTests.swift */,
 				A11111111111111111111124 /* ScadDocumentTests.swift */,
+				B11111111111111111111146 /* OpenSCADSyntaxHighlighterTests.swift */,
 			);
 			path = OpenSCADAppTests;
 			sourceTree = "<group>";
@@ -112,6 +117,7 @@
 			children = (
 				A1111111111111111111111A /* CodeEditorView.swift */,
 				A1111111111111111111111C /* ModelViewer.swift */,
+				B11111111111111111111144 /* OpenSCADSyntaxHighlighter.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -230,6 +236,7 @@
 				A1111111111111111111111B /* ModelViewer.swift in Sources */,
 				A1111111111111111111111D /* OpenSCADService.swift in Sources */,
 				A1111111111111111111111F /* DocumentView.swift in Sources */,
+				B11111111111111111111143 /* OpenSCADSyntaxHighlighter.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -239,6 +246,7 @@
 			files = (
 				A11111111111111111111121 /* OpenSCADServiceTests.swift in Sources */,
 				A11111111111111111111123 /* ScadDocumentTests.swift in Sources */,
+				B11111111111111111111145 /* OpenSCADSyntaxHighlighterTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
